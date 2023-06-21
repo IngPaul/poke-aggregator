@@ -1,11 +1,10 @@
 package com.alpha.pokeaggregator.webclient.implement;
 
-import com.alpha.pokeaggregator.config.RetryConfig;
 import com.alpha.pokeaggregator.model.Episode;
 import com.alpha.pokeaggregator.webclient.EpisodeClient;
 
 
-import lombok.RequiredArgsConstructor;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -27,6 +26,7 @@ public class EpisodeClientImpl implements EpisodeClient {
     }
     @Override
 //    @Retry(name = "myRetry", fallbackMethod = "fallback")
+    @CircuitBreaker( name = "myCircuitBreaker", fallbackMethod = "fallback2")
     public Mono<Episode> getEpisode(Long id){
 //        throw new RuntimeException("Error");
         return this.client
@@ -34,10 +34,12 @@ public class EpisodeClientImpl implements EpisodeClient {
                 .uri("{id}", id)
                 .retrieve()
                 .bodyToMono(Episode.class)
-                .retryWhen(retry)
-                .onErrorResume(this::fallback);
-//                .onErrorComplete(this::errorLog);
+                .retryWhen(retry);
 
+    }
+
+    private Mono<? extends Episode> fallback2(Throwable throwable) {
+        return Mono.error(new RuntimeException("Circuit Error"));
     }
 
     private Mono<? extends Episode> fallback(Throwable throwable) {
