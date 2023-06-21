@@ -29,7 +29,6 @@ public class CharacterAggregatorServiceImpl implements CharacterAggregatorServic
     private final EpisodeClient episodeClient;
 
     @Override
-//    @Retry(name = "myRetry", fallbackMethod = "fallback")
     public Mono<CharacterAggregate> getCharacter(Long characterId, Long episodeId){
         return Mono.zip(
                         this.characterClient.getCharacter(characterId),

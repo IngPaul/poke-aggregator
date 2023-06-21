@@ -16,19 +16,16 @@ import java.util.Arrays;
 
 @Service
 @Slf4j
-
 public class EpisodeClientImpl implements EpisodeClient {
     private final WebClient client;
     private final Retry retry;
     public EpisodeClientImpl(WebClient.Builder builder, Retry retry) {
-        this.client = builder.baseUrl("https://rickandmortyapi.com/api/").build();
+        this.client = builder.baseUrl("https://rickandmortyapi.com/api/episode/").build();
         this.retry = retry;
     }
     @Override
-//    @Retry(name = "myRetry", fallbackMethod = "fallback")
-    @CircuitBreaker( name = "myCircuitBreaker", fallbackMethod = "fallback2")
+    @CircuitBreaker( name = "myCircuitBreaker", fallbackMethod = "retrieveEpisodeInOtherRepository")
     public Mono<Episode> getEpisode(Long id){
-//        throw new RuntimeException("Error");
         return this.client
                 .get()
                 .uri("{id}", id)
@@ -37,16 +34,12 @@ public class EpisodeClientImpl implements EpisodeClient {
                 .retryWhen(retry);
 
     }
-
-    private Mono<? extends Episode> fallback2(Throwable throwable) {
-        return Mono.error(new RuntimeException("Circuit Error"));
-    }
-
-    private Mono<? extends Episode> fallback(Throwable throwable) {
-        log.info("Retry");
+    private Mono<? extends Episode> retrieveEpisodeInOtherRepository(Long id, Throwable throwable) {
+        log.info("*** Execute fallback of circuit breaker, retrieve episode in other repository");
         Episode ep = new Episode();
-        ep.setName("xxxx");
-        ep.setCharacters(Arrays.asList("a","b"));
+        ep.setId(id);
+        ep.setName("circuit-breaker"+id);
+        ep.setCharacters(Arrays.asList("circuit-breaker-character"));
         return Mono.just(ep );
     }
 }
