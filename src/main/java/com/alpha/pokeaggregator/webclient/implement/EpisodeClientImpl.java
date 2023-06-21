@@ -18,8 +18,10 @@ import java.util.Arrays;
 @Slf4j
 public class EpisodeClientImpl implements EpisodeClient {
     private final WebClient client;
+    private final WebClient client2;
     public EpisodeClientImpl(WebClient.Builder builder) {
-        this.client = builder.baseUrl("https://rickandmortyapi1.com/api/episode/").build();
+        this.client = builder.baseUrl("https://rickandmortyapi.com/api/episode/").build();
+        this.client2 = builder.baseUrl("https://rickandmortyapi.com2/api/episode/").build();
     }
 
 
@@ -30,17 +32,26 @@ public class EpisodeClientImpl implements EpisodeClient {
     public Mono<Episode> getEpisode(Long id){
 //        throw new RuntimeException("Error");
         log.info("--------------------------Retry 1");
-        return this.client
+        if(id.intValue() == 1 ) {
+            return this.client
                 .get()
                 .uri("{id}", id)
                 .retrieve()
                 //.onStatus(HttpStatusCode::is4xxClientError, response -> Mono.empty())
-                .bodyToMono(Episode.class)
-                .retry(5)
-                .timeout(Duration.ofMillis(300));
+                .bodyToMono(Episode.class);
+            //.retry(1)
+            //.timeout(Duration.ofMillis(300));
                 /*.map(r-> {
                     throw new NullPointerException("Error");
                 });*/
+        } else {
+            return this.client2
+                .get()
+                .uri("{id}", id)
+                .retrieve()
+                //.onStatus(HttpStatusCode::is4xxClientError, response -> Mono.empty())
+                .bodyToMono(Episode.class);
+        }
     }
 
     /**
@@ -53,9 +64,10 @@ public class EpisodeClientImpl implements EpisodeClient {
     /**
      * Fallback method for all other exception types.
      */
+    /*
     private  Mono<Episode> fallback(final java.lang.Long id, final java.lang.Throwable t) {
         //log.error("Primary lookup request failed, failing over to Bank Two.  Error was1: " + t.getMessage());
-        log.debug("---------------Fallback: routing account lookup request to Bank Two1 {}", id);
+        log.info("---------------Fallback: routing account lookup request to Bank Two1 {}", id);
         Episode ep = new Episode();
         ep.setName("xxxx");
         ep.setCharacters(Arrays.asList("a","b"));
@@ -63,7 +75,7 @@ public class EpisodeClientImpl implements EpisodeClient {
     }
     private  Mono<Episode> fallback(final java.lang.Long id, final org.springframework.web.reactive.function.client.WebClientRequestException t) {
         //log.error("Primary lookup request failed, failing over to Bank Two.  Error was1: " + t.getMessage());
-        log.debug("---------------Fallback: routing account lookup request to Bank Two1 {}", id);
+        log.info("---------------Fallback: routing account lookup request to Bank Two2 {}", id);
         Episode ep = new Episode();
         ep.setName("xxxx");
         ep.setCharacters(Arrays.asList("a","b"));
@@ -71,30 +83,35 @@ public class EpisodeClientImpl implements EpisodeClient {
     }
     private  Mono<Episode> fallback(final java.lang.Long id, final org.springframework.web.reactive.function.client.WebClientResponseException t) {
         //log.error("Primary lookup request failed, failing over to Bank Two.  Error was1: " + t.getMessage());
-        log.debug("---------------Fallback: routing account lookup request to Bank Two1 {}", id);
+        log.info("---------------Fallback: routing account lookup request to Bank Two3 {}", id);
         Episode ep = new Episode();
         ep.setName("xxxx");
         ep.setCharacters(Arrays.asList("a","b"));
         return Mono.just(ep );
     }
+*/
 
-    private  Mono<Episode> fallback(java.lang.Long id, Exception e) {
-        log.info("--------------------------Retry 2 " );
-        Episode ep = new Episode();
-        ep.setName("xxxx");
-        ep.setCharacters(Arrays.asList("a","b"));
-        return Mono.just(ep );
-    }
-
-    /*
     private  Mono<Episode> fallback(Exception e) {
         log.info("--------------------------Retry 2 " );
+        log.error("Primary lookup request failed, failing over to Bank Two.  Error was11: " + e.getMessage());
+        Episode ep = new Episode();
+        ep.setName("xxxx");
+        ep.setCharacters(Arrays.asList("a","b"));
+        return Mono.just(ep );
+    }
+    /*
+
+
+    private  Mono<Episode> fallback(java.lang.Long id, Exception t) {
+        log.info("--------------------------Retry 2 " );
+        log.error("Primary lookup request failed, failing over to Bank Two.  Error was1: " + t.getMessage());
         Episode ep = new Episode();
         ep.setName("xxxx");
         ep.setCharacters(Arrays.asList("a","b"));
         return Mono.just(ep );
     }
 
+     */
     public Mono<Episode> fallback(final Long id, final java.net.UnknownHostException t){
         log.error("Primary lookup request failed, failing over to Bank Two.  Error was2: " + t.getMessage());
         log.debug("Fallback: routing account lookup request to Bank Two2 {}", id);
