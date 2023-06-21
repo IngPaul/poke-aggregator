@@ -35,9 +35,9 @@ public class EpisodeClientImpl implements EpisodeClient {
                 .uri("{id}", id)
                 .retrieve()
                 //.onStatus(HttpStatusCode::is4xxClientError, response -> Mono.empty())
-                .bodyToMono(Episode.class);
-                //.retry(5)
-                //.timeout(Duration.ofMillis(300));
+                .bodyToMono(Episode.class)
+                .retry(5)
+                .timeout(Duration.ofMillis(300));
                 /*.map(r-> {
                     throw new NullPointerException("Error");
                 });*/
