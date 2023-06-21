@@ -8,23 +8,28 @@ import com.alpha.pokeaggregator.service.CharacterAggregatorService;
 import com.alpha.pokeaggregator.utils.Util;
 import com.alpha.pokeaggregator.webclient.CharacterClient;
 import com.alpha.pokeaggregator.webclient.EpisodeClient;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
+import reactor.util.retry.Retry;
 
+import java.time.Duration;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class CharacterAggregatorServiceImpl implements CharacterAggregatorService {
     private final CharacterClient characterClient;
     private final EpisodeClient episodeClient;
 
     @Override
+//    @Retry(name = "myRetry", fallbackMethod = "fallback")
     public Mono<CharacterAggregate> getCharacter(Long characterId, Long episodeId){
         return Mono.zip(
                         this.characterClient.getCharacter(characterId),
@@ -32,6 +37,7 @@ public class CharacterAggregatorServiceImpl implements CharacterAggregatorServic
                 )
                 .map(data->verifyEpisode(data, characterId));
     }
+
     private CharacterAggregate verifyEpisode(Tuple2<Character, Episode> characterAndEpisode, Long characterIdFind){
         Character character = characterAndEpisode.getT1();
         CharacterAggregate characterAggregate= CharacterMapper.INSTANCE.parseOfCharacter(character);
@@ -40,4 +46,7 @@ public class CharacterAggregatorServiceImpl implements CharacterAggregatorServic
         characterAggregate.setName(characterAndEpisode.getT1().getName());
         return characterAggregate;
     }
+//    public Mono<CharacterAggregate> fallback(Exception e) {
+//        return Mono.just(new CharacterAggregate() );
+//    }
 }
