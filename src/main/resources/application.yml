@@ -1,6 +1,12 @@
 spring:
   application:
     name: poke-aggregator
+  retry:
+    max-attempts: 3
+    backoff:
+      delay: 100ms
+      max-delay: 1000ms
+      multiplier: 2.0
 server:
   port: 8088
 #resilience4j.ratelimiter:
@@ -32,22 +38,30 @@ server:
 #          baseConfig: default
 
 retry:
-  maxAttempts: 1
+  maxAttempts: 3
   fixedDelay: 5
 
 
-resilience4j.circuitbreaker:
-  configs:
-    default:
-      slidingWindowType: COUNT_BASED
-      slidingWindowSize: 4
-      minimumNumberOfCalls: 2
-      failureRateThreshold: 50
-      # How long to wait until switching to half open.
-      waitDurationInOpenState: 10s
-      permittedNumberOfCallsInHalfOpenState: 2
-      recordExceptions:
-        - org.springframework.web.reactive.function.client.WebClientResponseException
+resilience4j:
+  circuitbreaker:
     instances:
       review-service:
-        baseConfig: default
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        maxWaitDurationOfCallHalfOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 4
+        recordExceptions:
+          - org.springframework.web.reactive.function.client.WebClientResponseException
+          - org.springframework.web.reactive.function.client.WebClientRequestException
+          - java.util.concurrent.TimeoutException
+#        automaticTransactionFromOpenToHalfOpenEnable: false
+#        ignoreExceptions:
+#          - org
+
+logging:
+  level:
+    io.github.resilience4j: DEBUG
+    root: DEBUG

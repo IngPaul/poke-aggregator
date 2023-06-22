@@ -17,10 +17,10 @@ import reactor.core.publisher.Mono;
 @Slf4j
 public class CharacterAggregateController {
     private final CharacterAggregatorService characterAggregatorService;
-    @GetMapping("/{characterId}/{episodeId}")
-    public Mono<ResponseEntity<CharacterAggregate>> getProduct(@PathVariable Long characterId, @PathVariable Long episodeId){
+    @GetMapping("/{characterId}/{episodeId}/{status}")
+    public Mono<ResponseEntity<CharacterAggregate>> getProduct(@PathVariable Long characterId, @PathVariable Long episodeId, @PathVariable String status){
         log.info("Request to retrieve data");
-        return characterAggregatorService.getCharacter(characterId, episodeId)
+        return characterAggregatorService.getCharacter(characterId, episodeId, status)
                 .map(ResponseEntity::ok)
                 .defaultIfEmpty(ResponseEntity.notFound().build());
     }

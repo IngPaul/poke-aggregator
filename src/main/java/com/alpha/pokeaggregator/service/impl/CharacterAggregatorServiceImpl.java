@@ -13,10 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
-import reactor.util.retry.Retry;
 
-import java.time.Duration;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -29,10 +26,10 @@ public class CharacterAggregatorServiceImpl implements CharacterAggregatorServic
     private final EpisodeClient episodeClient;
 
     @Override
-    public Mono<CharacterAggregate> getCharacter(Long characterId, Long episodeId){
+    public Mono<CharacterAggregate> getCharacter(Long characterId, Long episodeId, String status){
         return Mono.zip(
-                        this.characterClient.getCharacter(characterId),
-                        this.episodeClient.getEpisode(episodeId)
+                        this.characterClient.getCharacter(characterId, status),
+                        this.episodeClient.getEpisode(episodeId, status)
                 )
                 .map(data->verifyEpisode(data, characterId));
     }
