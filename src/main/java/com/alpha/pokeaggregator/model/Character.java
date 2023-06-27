@@ -18,4 +18,12 @@ public class Character {
         private List<String> episode;
         private String url;
         private LocalDate created;
+
+        @Override
+        public String toString() {
+                return "Character{" + "id=" + id + ", name='" + name + '\'' + ", status='" + status + '\''
+                    + ", gender='" + gender + '\'' + ", origin=" + origin + ", location=" + location + ", images='"
+                    + images + '\'' + ", episode=" + episode + ", url='" + url + '\'' + ", created=" + created + '}';
+        }
+
 }
