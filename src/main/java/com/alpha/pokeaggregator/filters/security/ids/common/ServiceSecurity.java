@@ -14,15 +14,17 @@ import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
+import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.StreamSupport;
 
 @Component
 @RequiredArgsConstructor
@@ -32,31 +34,32 @@ public class ServiceSecurity {
         return Flux.from(body)
                 .map(Utils::toJsonString)
                 .map(Utils::toJsoNode)
-                .map(newData->this.updateContentFieldsId((ObjectNode) newData, action))
+                .flatMap(newData->this.updateContentFieldsIdRecursive((ObjectNode) newData, action))
                 .map(newData->Utils.toDataBuffer(newData, exchange.getResponse().bufferFactory()));
     }
-    private ObjectNode updateContentFieldsId(ObjectNode objectNode, ActionEnum actionEnum){
-        Iterator<String> fieldNames = objectNode.fieldNames();
-        while (fieldNames.hasNext()) {
-            String fieldName = fieldNames.next();
-            JsonNode node = objectNode.get(fieldName);
-            if (node.isArray()) {
-                ArrayNode arrayNode = (ArrayNode) node;
-                for (JsonNode element : arrayNode) {
-                    updateContentFieldsId((ObjectNode) element, actionEnum);
-                }
-            } else if (node.isObject()) {
-                updateContentFieldsId((ObjectNode) node, actionEnum);
-            }else if (node.isTextual()) {
-                if (hasPattern(fieldName)) {
-                    String transformId = transformId(fieldName, node.asText(), actionEnum);
-                    objectNode.put(fieldName, transformId);
-                }
-            }
-        }
-        return objectNode;
-    }
 
+
+    public Mono<ObjectNode> updateContentFieldsIdRecursive(ObjectNode objectNode, ActionEnum actionEnum) {
+        return Flux.defer(()-> Flux.fromStream(
+                            StreamSupport.stream(
+                                    Spliterators.spliteratorUnknownSize(objectNode.fieldNames(), Spliterator.ORDERED),
+                                    false)))
+                .flatMap(fieldName -> {
+                    JsonNode node = objectNode.get(fieldName.toString());
+                    if (node.isArray()) {
+                        ArrayNode arrayNode = (ArrayNode) node;
+                         return Flux.fromIterable(arrayNode)
+                                .flatMap(element -> updateContentFieldsIdRecursive((ObjectNode) element, actionEnum));
+                    } else if (node.isObject()) {
+                        return updateContentFieldsIdRecursive((ObjectNode) node, actionEnum);
+                    } else if (node.isTextual() && hasPattern(fieldName.toString())) {
+                        String transformedId = transformId(fieldName.toString(), node.asText(), actionEnum);
+                        objectNode.put(fieldName.toString(), transformedId);
+                    }
+                    return Flux.empty();
+                })
+                .then(Mono.just(objectNode));
+    }
     private String transformId(String key, String value, ActionEnum action) {
         if(action.equals(ActionEnum.DECRYPT))
             return this.decryptFields(key, value);
@@ -64,6 +67,7 @@ public class ServiceSecurity {
             return this.encryptFields(key, value);
         return value;
     }
+
 
     private Boolean hasPattern(String fieldName) {
         return securityConfig.getPatterns().stream().anyMatch(pattern -> fieldName.matches(pattern));
