@@ -6,10 +6,12 @@ import com.alpha.pokeaggregator.filters.security.ids.properties.SecurityConfig;
 import com.alpha.pokeaggregator.filters.security.ids.util.Utils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
 import org.reactivestreams.Publisher;
 import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.core.io.buffer.DataBufferFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
@@ -17,6 +19,7 @@ import reactor.core.publisher.Flux;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -30,26 +33,13 @@ public class ServiceSecurity {
                 .map(Utils::toJsonString)
                 .map(Utils::toJsoNode)
                 .map(newData->this.updateData(newData, action))
-                .map(newData->this.toDataBuffer(newData, exchange));
+                .map(newData->Utils.toDataBuffer(newData, exchange.getResponse().bufferFactory()));
     }
 
     private ObjectNode updateData(JsonNode jsonNode, ActionEnum action){
         ObjectNode objectNode = (ObjectNode) jsonNode;
-        findFieldsId(jsonNode)
-                .stream().parallel()
-                .map(field-> {
-                    if(action.equals(ActionEnum.DECRYPT))
-                        return this.decryptFields(field);
-                    if(action.equals(ActionEnum.ENCRYPT))
-                        return this.encryptFields(field);
-                    return null;
-                })
-                .map(dataRecover -> {
-                    objectNode.put(dataRecover.getKey(), dataRecover.getNewValue());
-                    return dataRecover;
-                })
-                .toList();
-        return objectNode;
+
+        return updateContentFieldsId(objectNode, action);
     }
     private List<PropertySave> findFieldsId(JsonNode jsonNode){
         List<PropertySave> resultList = new ArrayList<>();
@@ -64,24 +54,47 @@ public class ServiceSecurity {
         return resultList;
     }
 
+    private ObjectNode updateContentFieldsId(ObjectNode objectNode, ActionEnum actionEnum){
+        Iterator<String> fieldNames = objectNode.fieldNames();
+        while (fieldNames.hasNext()) {
+            String fieldName = fieldNames.next();
+            JsonNode node = objectNode.get(fieldName);
+            if (node.isArray()) {
+                ArrayNode arrayNode = (ArrayNode) node;
+                for (JsonNode element : arrayNode) {
+                    updateContentFieldsId((ObjectNode) element, actionEnum);
+                }
+            } else if (node.isObject()) {
+                updateContentFieldsId((ObjectNode) node, actionEnum);
+            }else if (node.isTextual()) {
+                if (hasPattern(fieldName)) {
+                    String transformId = transformId(fieldName, node.asText(), actionEnum);
+                    objectNode.put(fieldName, transformId);
+                }
+            }
+        }
+        return objectNode;
+    }
+
+    private String transformId(String key, String value, ActionEnum action) {
+        if(action.equals(ActionEnum.DECRYPT))
+            return this.decryptFields(key, value);
+        if(action.equals(ActionEnum.ENCRYPT))
+            return this.encryptFields(key, value);
+        return value;
+    }
+
     private Boolean hasPattern(String fieldName) {
         return securityConfig.getPatterns().stream().anyMatch(pattern -> fieldName.matches(pattern));
     }
 
-    private DataBuffer toDataBuffer(Object objectNode, ServerWebExchange exchange){
-        byte[] updatedBytes = objectNode.toString().getBytes();
-        return exchange.getResponse().bufferFactory().wrap(updatedBytes);
-    }
-
-    private PropertySave encryptFields(PropertySave propertySave){
+    private String encryptFields(String key, String value){
         /**TODO Conectar con libreria para decodificar en base al value*/
-        propertySave.setNewValue("*******");
-        return propertySave;
+        return "*******";
     }
-    private PropertySave decryptFields(PropertySave propertySave){
+    private String decryptFields(String key, String value){
         /**TODO Conectar con libreria para decodificar en base al value*/
-        propertySave.setNewValue("DECRYPT");
-        return propertySave;
+        return "DECRYPT";
     }
 
 }

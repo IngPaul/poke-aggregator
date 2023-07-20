@@ -3,9 +3,12 @@ package com.alpha.pokeaggregator.filters.security.ids.util;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.core.io.buffer.DataBufferFactory;
+import org.springframework.web.server.ServerWebExchange;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -28,5 +31,24 @@ public class Utils {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+    public static DataBuffer toDataBuffer(Object objectNode, DataBufferFactory dataBufferFactory){
+        byte[] updatedBytes = objectNode.toString().getBytes();
+        return dataBufferFactory.wrap(updatedBytes);
+    }
+    public static String getValueByPath(JsonNode jsonNode, String path) {
+        String[] segments = path.split("\\.");
+        JsonNode currentNode = jsonNode;
+        for (String segment : segments) {
+            currentNode = currentNode.path(segment);
+        }
+        return currentNode.isMissingNode() ? null : currentNode.asText();
+    }
+    public static String getParentByPath(JsonNode jsonNode, String path) {
+        String[] segments = path.split("\\.");
+        JsonNode currentNode = jsonNode;
+        for(int i=0; i<segments.length-1;i++)
+            currentNode = currentNode.path(segments[i]);
+        return currentNode.isMissingNode() ? null : currentNode.asText();
     }
 }

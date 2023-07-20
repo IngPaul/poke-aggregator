@@ -1,13 +1,10 @@
 package com.alpha.pokeaggregator.controller;
 
+import com.alpha.pokeaggregator.controller.exampleDTO.PersonDTO;
 import com.alpha.pokeaggregator.model.CharacterAggregate;
 import com.alpha.pokeaggregator.service.CharacterAggregatorService;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.reactivestreams.Publisher;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -30,7 +27,7 @@ public class CharacterAggregateController {
     }
 
     @PostMapping(value = "/postSecurityId", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public Mono<ResponseEntity<SampleDTO>> handleSampleRequest(@RequestBody SampleDTO dto) {
+    public Mono<ResponseEntity<PersonDTO>> handleSampleRequest(@RequestBody PersonDTO dto) {
        return Flux.just(5, 10, 23, 25)
                 .map(r1 -> {
                     System.out.println("map del flux principal:/ id:" + Thread.currentThread().getId() + "/ name:" + Thread.currentThread().getName());
@@ -49,8 +46,6 @@ public class CharacterAggregateController {
                         }
                 ).then(Mono.just(dto))
                 .map(ResponseEntity::ok);
-
-       // return Mono.just(ResponseEntity.ok(dto));
 
     }
 
