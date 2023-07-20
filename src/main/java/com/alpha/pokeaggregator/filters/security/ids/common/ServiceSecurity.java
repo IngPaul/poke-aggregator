@@ -32,28 +32,9 @@ public class ServiceSecurity {
         return Flux.from(body)
                 .map(Utils::toJsonString)
                 .map(Utils::toJsoNode)
-                .map(newData->this.updateData(newData, action))
+                .map(newData->this.updateContentFieldsId((ObjectNode) newData, action))
                 .map(newData->Utils.toDataBuffer(newData, exchange.getResponse().bufferFactory()));
     }
-
-    private ObjectNode updateData(JsonNode jsonNode, ActionEnum action){
-        ObjectNode objectNode = (ObjectNode) jsonNode;
-
-        return updateContentFieldsId(objectNode, action);
-    }
-    private List<PropertySave> findFieldsId(JsonNode jsonNode){
-        List<PropertySave> resultList = new ArrayList<>();
-        jsonNode.fields().forEachRemaining(entry ->{
-            String key = entry.getKey();
-            String value = entry.getValue().asText();
-            if (hasPattern(key)) {
-                PropertySave property= new PropertySave(key, value, null);
-                resultList.add(property);
-            }
-        });
-        return resultList;
-    }
-
     private ObjectNode updateContentFieldsId(ObjectNode objectNode, ActionEnum actionEnum){
         Iterator<String> fieldNames = objectNode.fieldNames();
         while (fieldNames.hasNext()) {
