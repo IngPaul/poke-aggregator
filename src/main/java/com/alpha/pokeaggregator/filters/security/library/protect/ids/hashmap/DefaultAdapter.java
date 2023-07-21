@@ -1,8 +1,9 @@
 package com.alpha.pokeaggregator.filters.security.library.protect.ids.hashmap;
 
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
-@Component
+@Service
 public class DefaultAdapter implements SecurityLibrary {
 
     @Override

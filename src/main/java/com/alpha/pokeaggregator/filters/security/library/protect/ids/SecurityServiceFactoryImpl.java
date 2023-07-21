@@ -13,12 +13,16 @@ import java.util.Map;
 @Component
 public class SecurityServiceFactoryImpl implements SecurityServiceFactory{
     private Map<String, SecurityLibrary> securityLibraryMap;
+    @Qualifier("defaultAdapterImpl")
+    private final SecurityLibrary defaultAdapter;
+    @Qualifier("hashMapLibraryAdapterImpl")
+    private final SecurityLibrary hashMapLibraryAdapter;
     @PostConstruct
     public void init() {
-        securityLibraryMap= Map.of("HASHMAP",new HashMapLibraryAdapter());
+        securityLibraryMap= Map.of("HASHMAP",hashMapLibraryAdapter);
     }
     @Override
     public SecurityLibrary createSecurityService(String encryptionType) {
-        return securityLibraryMap.getOrDefault(encryptionType.toUpperCase(), new DefaultAdapter());
+        return securityLibraryMap.getOrDefault(encryptionType.toUpperCase(), defaultAdapter);
     }
 }
