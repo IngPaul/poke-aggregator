@@ -1,36 +1,32 @@
 package com.alpha.pokeaggregator.filters.security.ids.common;
 
 import com.alpha.pokeaggregator.filters.security.ids.dto.ActionEnum;
-import com.alpha.pokeaggregator.filters.security.ids.dto.PropertySave;
 import com.alpha.pokeaggregator.filters.security.ids.properties.SecurityConfig;
 import com.alpha.pokeaggregator.filters.security.ids.util.Utils;
+import com.alpha.pokeaggregator.filters.security.library.protect.ids.SecurityServiceFactory;
+import com.alpha.pokeaggregator.filters.security.library.protect.ids.hashmap.SecurityLibrary;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
 import org.reactivestreams.Publisher;
 import org.springframework.core.io.buffer.DataBuffer;
-import org.springframework.core.io.buffer.DataBufferFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
-import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
-import java.io.IOException;
-import java.lang.reflect.Field;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.StreamSupport;
 
 @Component
 @RequiredArgsConstructor
 public class ServiceSecurity {
     private final SecurityConfig securityConfig;
+    private final SecurityServiceFactory securityServiceFactory;
+    private SecurityLibrary securityLibrary;
     public Flux<DataBuffer> updateBuffer(Publisher<DataBuffer> body, ServerWebExchange exchange, ActionEnum action) {
+        List<String> parameter = exchange.getRequest().getHeaders().get("algoritm");
+        securityLibrary=securityServiceFactory.createSecurityService((parameter.isEmpty()?"":parameter.get(0)));
         return Flux.from(body)
                 .map(Utils::toJsonString)
                 .map(Utils::toJsoNode)
@@ -62,9 +58,9 @@ public class ServiceSecurity {
     }
     private String transformId(String key, String value, ActionEnum action) {
         if(action.equals(ActionEnum.DECRYPT))
-            return this.decryptFields(key, value);
+            return securityLibrary.decrypt(key, value);
         if(action.equals(ActionEnum.ENCRYPT))
-            return this.encryptFields(key, value);
+            return securityLibrary.encrypt(key, value);
         return value;
     }
 
