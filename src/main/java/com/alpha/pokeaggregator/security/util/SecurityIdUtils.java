@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 public class SecurityIdUtils {
+
     private SecurityIdUtils(){}
     public static String toJsonString(DataBuffer dataBuffer){
         byte[] bytes = new byte[dataBuffer.readableByteCount()];

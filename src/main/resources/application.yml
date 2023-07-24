@@ -69,7 +69,7 @@ security:
   ids:
     salt: 'this is my salt'
     patterns:
-      - '.*Id$'
-      - '.*id$'
-      - '.*Uid$'
+      id: '.*Id$'
+      idOnly: '.*id$'
+      uid: '.*Uid$'
 #ConcurrentHashMap

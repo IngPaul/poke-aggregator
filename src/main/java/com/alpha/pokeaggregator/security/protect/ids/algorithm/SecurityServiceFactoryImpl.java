@@ -6,7 +6,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static com.alpha.pokeaggregator.security.util.Constants.ALGORITHM_HASHIDS;
 
@@ -18,12 +20,13 @@ public class SecurityServiceFactoryImpl implements SecurityServiceFactory {
     private final SecurityLibraryAdapter defaultLibrary;
     @Qualifier("hashIdsLibrary")
     private final SecurityLibraryAdapter hashIdsLibrary;
-    private Map<String, SecurityLibraryAdapter> securityLibraryMap;
+    private ConcurrentHashMap<String, SecurityLibraryAdapter> securityLibraryMap;
 
 
     @PostConstruct
     public void init() {
-        securityLibraryMap= Map.of(ALGORITHM_HASHIDS, hashIdsLibrary);
+        securityLibraryMap = new ConcurrentHashMap<>();
+        securityLibraryMap.put(ALGORITHM_HASHIDS, hashIdsLibrary);
     }
 
     @Override

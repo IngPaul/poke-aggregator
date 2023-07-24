@@ -66,7 +66,7 @@ public class ServiceSecurity {
     }
 
     private Boolean hasPattern(String fieldName) {
-        return securityConfig.getPatterns().stream().anyMatch(fieldName::matches);
+        return securityConfig.getPatterns().values().stream().anyMatch(fieldName::matches);
     }
 
 }

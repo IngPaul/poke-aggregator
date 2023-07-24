@@ -10,6 +10,7 @@ public class Constants {
     public static final String ALGORITHM_HEADER="ALGORITHM";
     public static final String ENCRYPT_HEADER="ENCRYPT";
     public static final String ENCRYPT_ON="ON";
+    public static final String INVALID_ID = "Id invalid";
 
     private Constants(){}
 }
