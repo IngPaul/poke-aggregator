@@ -1,10 +1,10 @@
 package com.alpha.pokeaggregator.security.protect.ids.filter.common;
 
 import com.alpha.pokeaggregator.security.protect.ids.algorithm.adapter.SecurityLibraryAdapter;
-import com.alpha.pokeaggregator.security.protect.ids.algorithm.factory.SecurityServiceFactory;
+import com.alpha.pokeaggregator.security.protect.ids.algorithm.SecurityServiceFactory;
 import com.alpha.pokeaggregator.security.configuration.SecurityIdConfig;
 import com.alpha.pokeaggregator.security.protect.ids.filter.dto.ActionEnum;
-import com.alpha.pokeaggregator.security.util.Utils;
+import com.alpha.pokeaggregator.security.util.SecurityIdUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -30,10 +30,10 @@ public class ServiceSecurity {
         List<String> parameter = exchange.getRequest().getHeaders().get(ALGORITHM_HEADER);
         securityLibrary=securityServiceFactory.createSecurityService((parameter==null ||parameter.isEmpty()?"":parameter.get(0)));
         return Flux.from(body)
-                .map(Utils::toJsonString)
-                .map(Utils::toJsoNode)
+                .map(SecurityIdUtils::toJsonString)
+                .map(SecurityIdUtils::toJsoNode)
                 .flatMap(newData->this.updateContentFieldsIdRecursive((ObjectNode) newData, action))
-                .map(newData->Utils.toDataBuffer(newData, exchange.getResponse().bufferFactory()));
+                .map(newData-> SecurityIdUtils.toDataBuffer(newData, exchange.getResponse().bufferFactory()));
     }
 
 
@@ -51,18 +51,18 @@ public class ServiceSecurity {
                     } else if (node.isObject()) {
                         return updateContentFieldsIdRecursive((ObjectNode) node, actionEnum);
                     } else if ((node.isTextual() || node.isNumber()) && Boolean.TRUE.equals(hasPattern(fieldName))) {
-                        transformId(fieldName, node, actionEnum).map(transformedId->objectNode.put(fieldName, transformedId)).subscribe();
+                        objectNode.put(fieldName, transformId(fieldName, node, actionEnum));
                     }
                     return Flux.empty();
                 })
                 .then(Mono.just(objectNode));
     }
-    private Mono<String> transformId(String key, JsonNode value, ActionEnum action) {
+    private String transformId(String key, JsonNode value, ActionEnum action) {
         if(action.equals(ActionEnum.DECRYPT))
             return securityLibrary.decrypt(key, value);
         if(action.equals(ActionEnum.ENCRYPT))
             return securityLibrary.encrypt(key, value);
-        return Mono.just(value.asText());
+        return value.asText();
     }
 
     private Boolean hasPattern(String fieldName) {

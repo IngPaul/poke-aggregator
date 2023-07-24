@@ -4,6 +4,7 @@ package com.alpha.pokeaggregator.security.algorithm.protect.ids.library.hashids;
 import java.util.Arrays;
 
 import com.alpha.pokeaggregator.security.protect.ids.algorithm.library.Hashids;
+import com.alpha.pokeaggregator.security.util.SecurityIdUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,6 +37,21 @@ public class HashidsTest {
         Hashids a = new Hashids("this is my pepper");
         long[] b = a.decode("NkK9");
         Assertions.assertEquals(b.length, 0);
+    }
+
+    @Test
+    public void testEncodeHex(){
+        Hashids a = new Hashids("this is my salt");
+        String valueHex=SecurityIdUtils.stringToHex("5");
+        String encodeValueHex = a.encodeHex(valueHex);
+
+        String decodeValueHex = a.decodeHex(encodeValueHex);
+        String decodeValue = SecurityIdUtils.hexToString(decodeValueHex);
+
+        Assertions.assertEquals("35", valueHex);
+        Assertions.assertEquals("QD2", encodeValueHex);
+        Assertions.assertEquals("35", decodeValueHex);
+        Assertions.assertEquals("5", decodeValue);
     }
 
     @Test
@@ -110,6 +126,8 @@ public class HashidsTest {
         Assertions.assertEquals(a.encode(4L), "2l");
         Assertions.assertEquals(a.encode(5L), "rD");
     }
+
+
 
     @Test
     public void testForValuesGreaterIntMaxval(){

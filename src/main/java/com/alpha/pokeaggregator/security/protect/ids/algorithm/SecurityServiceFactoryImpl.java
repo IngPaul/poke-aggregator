@@ -1,4 +1,4 @@
-package com.alpha.pokeaggregator.security.protect.ids.algorithm.factory;
+package com.alpha.pokeaggregator.security.protect.ids.algorithm;
 
 import com.alpha.pokeaggregator.security.protect.ids.algorithm.adapter.SecurityLibraryAdapter;
 import jakarta.annotation.PostConstruct;
@@ -16,10 +16,8 @@ public class SecurityServiceFactoryImpl implements SecurityServiceFactory {
 
     @Qualifier("defaultLibrary")
     private final SecurityLibraryAdapter defaultLibrary;
-
     @Qualifier("hashIdsLibrary")
     private final SecurityLibraryAdapter hashIdsLibrary;
-
     private Map<String, SecurityLibraryAdapter> securityLibraryMap;
 
 

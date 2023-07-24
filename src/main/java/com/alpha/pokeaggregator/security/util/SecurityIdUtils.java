@@ -8,9 +8,10 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
-public class Utils {
-    private Utils(){}
+public class SecurityIdUtils {
+    private SecurityIdUtils(){}
     public static String toJsonString(DataBuffer dataBuffer){
         byte[] bytes = new byte[dataBuffer.readableByteCount()];
         dataBuffer.read(bytes);
@@ -52,5 +53,16 @@ public class Utils {
                     }
                     return false;
                 });
+    }
+
+    public static String stringToHex(String input) {
+        byte[] bytes = input.getBytes();
+        BigInteger bigInt = new BigInteger(1, bytes);
+        return String.format("%0" + (bytes.length << 1) + "x", bigInt);
+    }
+    public static String hexToString(String hex) {
+        BigInteger bigInt = new BigInteger(hex, 16);
+        byte[] bytes = bigInt.toByteArray();
+        return new String(bytes);
     }
 }
