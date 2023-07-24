@@ -1,8 +1,7 @@
-package com.alpha.pokeaggregator.filters.security.ids.request;
-import com.alpha.pokeaggregator.filters.security.ids.common.ServiceSecurity;
-import com.alpha.pokeaggregator.filters.security.ids.dto.ActionEnum;
+package com.alpha.pokeaggregator.security.protect.ids.filter.request;
+import com.alpha.pokeaggregator.security.protect.ids.filter.common.ServiceSecurity;
+import com.alpha.pokeaggregator.security.protect.ids.filter.dto.ActionEnum;
 import org.springframework.core.io.buffer.DataBuffer;
-import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpRequestDecorator;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;

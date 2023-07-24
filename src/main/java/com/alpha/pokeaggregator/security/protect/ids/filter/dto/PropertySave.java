@@ -1,4 +1,4 @@
-package com.alpha.pokeaggregator.filters.security.ids.dto;
+package com.alpha.pokeaggregator.security.protect.ids.filter.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

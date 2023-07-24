@@ -28,23 +28,7 @@ public class CharacterAggregateController {
 
     @PostMapping(value = "/postSecurityId", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public Mono<ResponseEntity<PersonDTO>> handleSampleRequest(@RequestBody PersonDTO dto) {
-       return Flux.just(5, 10, 23, 25)
-                .map(r1 -> {
-                    System.out.println("map del flux principal:/ id:" + Thread.currentThread().getId() + "/ name:" + Thread.currentThread().getName());
-                    System.out.println(Thread.currentThread().toString());
-                    return r1;
-                })
-                .flatMap(n -> {
-                            System.out.println("flatmap del flux principal: id:" + Thread.currentThread().getId() + "/ name:" + Thread.currentThread().getName());
-                            System.out.println(Thread.currentThread().toString());
-                            return Flux.just(n * 2)
-                                    .map(r -> {
-                                        System.out.println("map del flux interno id:" + Thread.currentThread().getId() + "/ name:" + Thread.currentThread().getName());
-                                        System.out.println(Thread.currentThread());
-                                        return r;
-                                    });
-                        }
-                ).then(Mono.just(dto))
+       return  Mono.just(dto)
                 .map(ResponseEntity::ok);
 
     }

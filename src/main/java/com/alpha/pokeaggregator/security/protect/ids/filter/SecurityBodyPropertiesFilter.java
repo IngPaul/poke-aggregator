@@ -1,8 +1,8 @@
-package com.alpha.pokeaggregator.filters.security.ids;
+package com.alpha.pokeaggregator.security.protect.ids.filter;
 
-import com.alpha.pokeaggregator.filters.security.ids.common.ServiceSecurity;
-import com.alpha.pokeaggregator.filters.security.ids.request.CustomServerHttpRequestDecoratorForEncrypt;
-import com.alpha.pokeaggregator.filters.security.ids.response.CustomServerHttpResponseDecoratorForDecrypt;
+import com.alpha.pokeaggregator.security.protect.ids.filter.common.ServiceSecurity;
+import com.alpha.pokeaggregator.security.protect.ids.filter.request.CustomServerHttpRequestDecoratorForEncrypt;
+import com.alpha.pokeaggregator.security.protect.ids.filter.response.CustomServerHttpResponseDecoratorForDecrypt;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.annotation.Order;
@@ -15,6 +15,10 @@ import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Mono;
 
 import java.util.*;
+
+import static com.alpha.pokeaggregator.security.util.Constants.ENCRYPT_HEADER;
+import static com.alpha.pokeaggregator.security.util.Constants.ENCRYPT_ON;
+
 @Component
 @Order(1)
 @Slf4j
@@ -27,8 +31,8 @@ public class SecurityBodyPropertiesFilter implements WebFilter {
         return chain.filter(newExchange);
     }
     private ServerWebExchange processEncrypt(ServerWebExchange exchange){
-        List<String> hasOperationEncrypt = exchange.getRequest().getHeaders().getOrEmpty("encrypt");
-        if(!hasOperationEncrypt.isEmpty() && hasOperationEncrypt.get(0).equalsIgnoreCase("ON"))
+        List<String> hasOperationEncrypt = exchange.getRequest().getHeaders().getOrEmpty(ENCRYPT_HEADER);
+        if(!hasOperationEncrypt.isEmpty() && hasOperationEncrypt.get(0).equalsIgnoreCase(ENCRYPT_ON))
             return exchange.mutate()
                     .request(buildRequestFilter(exchange))
                     .response(buildResponseFilter(exchange))

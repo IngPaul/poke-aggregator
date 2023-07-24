@@ -67,6 +67,7 @@ logging:
     root: DEBUG
 security:
   ids:
+    salt: 'this is my salt'
     patterns:
       - '.*Id$'
       - '.*id$'

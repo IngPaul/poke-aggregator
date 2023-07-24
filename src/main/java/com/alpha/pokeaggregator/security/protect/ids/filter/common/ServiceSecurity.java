@@ -1,10 +1,10 @@
-package com.alpha.pokeaggregator.filters.security.ids.common;
+package com.alpha.pokeaggregator.security.protect.ids.filter.common;
 
-import com.alpha.pokeaggregator.filters.security.ids.dto.ActionEnum;
-import com.alpha.pokeaggregator.filters.security.ids.properties.SecurityConfig;
-import com.alpha.pokeaggregator.filters.security.ids.util.Utils;
-import com.alpha.pokeaggregator.filters.security.library.protect.ids.SecurityServiceFactory;
-import com.alpha.pokeaggregator.filters.security.library.protect.ids.hashmap.SecurityLibrary;
+import com.alpha.pokeaggregator.security.protect.ids.algorithm.adapter.SecurityLibraryAdapter;
+import com.alpha.pokeaggregator.security.protect.ids.algorithm.factory.SecurityServiceFactory;
+import com.alpha.pokeaggregator.security.configuration.SecurityIdConfig;
+import com.alpha.pokeaggregator.security.protect.ids.filter.dto.ActionEnum;
+import com.alpha.pokeaggregator.security.util.Utils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -18,15 +18,17 @@ import reactor.core.publisher.Mono;
 import java.util.*;
 import java.util.stream.StreamSupport;
 
+import static com.alpha.pokeaggregator.security.util.Constants.ALGORITHM_HEADER;
+
 @Component
 @RequiredArgsConstructor
 public class ServiceSecurity {
-    private final SecurityConfig securityConfig;
+    private final SecurityIdConfig securityConfig;
     private final SecurityServiceFactory securityServiceFactory;
-    private SecurityLibrary securityLibrary;
+    private SecurityLibraryAdapter securityLibrary;
     public Flux<DataBuffer> updateBuffer(Publisher<DataBuffer> body, ServerWebExchange exchange, ActionEnum action) {
-        List<String> parameter = exchange.getRequest().getHeaders().get("algoritm");
-        securityLibrary=securityServiceFactory.createSecurityService((parameter.isEmpty()?"":parameter.get(0)));
+        List<String> parameter = exchange.getRequest().getHeaders().get(ALGORITHM_HEADER);
+        securityLibrary=securityServiceFactory.createSecurityService((parameter==null ||parameter.isEmpty()?"":parameter.get(0)));
         return Flux.from(body)
                 .map(Utils::toJsonString)
                 .map(Utils::toJsoNode)
@@ -41,41 +43,30 @@ public class ServiceSecurity {
                                     Spliterators.spliteratorUnknownSize(objectNode.fieldNames(), Spliterator.ORDERED),
                                     false)))
                 .flatMap(fieldName -> {
-                    JsonNode node = objectNode.get(fieldName.toString());
+                    JsonNode node = objectNode.get(fieldName);
                     if (node.isArray()) {
                         ArrayNode arrayNode = (ArrayNode) node;
                          return Flux.fromIterable(arrayNode)
                                 .flatMap(element -> updateContentFieldsIdRecursive((ObjectNode) element, actionEnum));
                     } else if (node.isObject()) {
                         return updateContentFieldsIdRecursive((ObjectNode) node, actionEnum);
-                    } else if (node.isTextual() && hasPattern(fieldName.toString())) {
-                        String transformedId = transformId(fieldName.toString(), node.asText(), actionEnum);
-                        objectNode.put(fieldName.toString(), transformedId);
+                    } else if ((node.isTextual() || node.isNumber()) && Boolean.TRUE.equals(hasPattern(fieldName))) {
+                        transformId(fieldName, node, actionEnum).map(transformedId->objectNode.put(fieldName, transformedId)).subscribe();
                     }
                     return Flux.empty();
                 })
                 .then(Mono.just(objectNode));
     }
-    private String transformId(String key, String value, ActionEnum action) {
+    private Mono<String> transformId(String key, JsonNode value, ActionEnum action) {
         if(action.equals(ActionEnum.DECRYPT))
             return securityLibrary.decrypt(key, value);
         if(action.equals(ActionEnum.ENCRYPT))
             return securityLibrary.encrypt(key, value);
-        return value;
+        return Mono.just(value.asText());
     }
-
 
     private Boolean hasPattern(String fieldName) {
-        return securityConfig.getPatterns().stream().anyMatch(pattern -> fieldName.matches(pattern));
-    }
-
-    private String encryptFields(String key, String value){
-        /**TODO Conectar con libreria para decodificar en base al value*/
-        return "*******";
-    }
-    private String decryptFields(String key, String value){
-        /**TODO Conectar con libreria para decodificar en base al value*/
-        return "DECRYPT";
+        return securityConfig.getPatterns().stream().anyMatch(fieldName::matches);
     }
 
 }
