@@ -18,14 +18,20 @@ public class HashIdsLibraryAdapterImpl implements SecurityLibraryAdapter {
     private  final SecurityIdConfig securityIdConfig;
     @Override
     public String encrypt(String key, JsonNode data) {
+        log.info("Encrypt response, property {}", key);
         Hashids hashids = new Hashids(securityIdConfig.getSalt());
-        String dataHex = SecurityIdUtils.stringToHex(data.asText());
-        String valueEncrypt = hashids.encodeHex(dataHex);
-        return valueEncrypt;
+        try {
+            String dataHex = SecurityIdUtils.stringToHex(data.asText());
+            String valueEncrypt = hashids.encodeHex(dataHex);
+            return valueEncrypt;
+        }catch (Exception ex){
+            log.error("There was a fail at the moment to encrypt with Hashids the value {} of property {}, error: ", data.asText(), key, ex);
+            throw new RuntimeException(INVALID_ID);
+        }
     }
     @Override
     public String decrypt(String key, JsonNode data) {
-        log.info("Decrypt property {}", key);
+        log.info("Decrypt request, property {}", key);
         Hashids hashids = new Hashids(securityIdConfig.getSalt());
         String decodeValueHex = hashids.decodeHex(data.asText());
         try {

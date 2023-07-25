@@ -3,7 +3,6 @@ package com.alpha.pokeaggregator.security.util;
 public class Constants {
     public static final String DECRYPT_FAIL="decrypt_fail";
     public static final String ENCRYPT_FAIL="encrypt_fail";
-
     public static final String DECRYPT_DEFAULT="decrypt default";
     public static final String ENCRYPT_DEFAULT="encrypt default";
     public static final String ALGORITHM_HASHIDS="HASHIDS";
